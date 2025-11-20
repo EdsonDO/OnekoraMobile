@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -8,12 +8,14 @@ import {
   TouchableOpacity,
   ScrollView,
   Image,
+  Dimensions,
 } from 'react-native';
 import { palette } from '../theme/palette';
 import Icon from 'react-native-vector-icons/Ionicons';
 import MaskedView from '@react-native-masked-view/masked-view';
 import LinearGradient from 'react-native-linear-gradient';
 import { useAuth } from '../context/AuthContext';
+import { useFocusEffect } from '@react-navigation/native';
 import { CompositeScreenProps } from '@react-navigation/native';
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -23,13 +25,21 @@ type GamesScreenProps = CompositeScreenProps<
   NativeStackScreenProps<GamesStackParamList, 'GamesBase'>,
   BottomTabScreenProps<RootTabParamList>
 >;
+const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const GamesScreen = ({ navigation }: GamesScreenProps) => {
   const { authData } = useAuth();
+  const [points, setPoints] = useState(authData?.puntos || 0);
+
+  useFocusEffect(
+    useCallback(() => {
+      setPoints(authData?.puntos || 0);
+    }, [authData?.puntos])
+  );
 
   const renderGameCard = (
     title: string,
-    points: string,
+    pointsText: string,
     imageSource: any,
     onPress?: () => void,
   ) => {
@@ -61,7 +71,7 @@ const GamesScreen = ({ navigation }: GamesScreenProps) => {
 
         <View style={styles.gameContentOverlay}>
           <Text style={styles.gameTitle}>{title}</Text>
-          <Text style={styles.gamePoints}>{points}</Text>
+          <Text style={styles.gamePoints}>{pointsText}</Text>
         </View>
       </TouchableOpacity>
     );
@@ -70,7 +80,7 @@ const GamesScreen = ({ navigation }: GamesScreenProps) => {
   const renderRewardCard = (
     title: string,
     stock: number,
-    points: number,
+    cost: number,
     icon: string,
   ) => (
     <View style={styles.rewardCard}>
@@ -80,7 +90,7 @@ const GamesScreen = ({ navigation }: GamesScreenProps) => {
       <View style={styles.rewardInfo}>
         <Text style={styles.rewardTitle}>{title}</Text>
         <Text style={styles.rewardStock}>Stock disponible: {stock}</Text>
-        <Text style={styles.rewardPoints}>{points} puntos</Text>
+        <Text style={styles.rewardPoints}>{cost} puntos</Text>
       </View>
       <TouchableOpacity style={styles.rewardButton}>
         <Text style={styles.rewardButtonText}>Canjear</Text>
@@ -91,13 +101,22 @@ const GamesScreen = ({ navigation }: GamesScreenProps) => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor={palette.fondoApp} />
-      <ScrollView style={styles.scrollView}>
+      
+      <Image
+        source={require('../assets/images/bgAplicacionOnekora.png')}
+        style={styles.backgroundImage}
+        resizeMode="cover"
+      />
+      
+      <ScrollView style={styles.scrollView} contentContainerStyle={{paddingBottom: 30}}>
         <View style={styles.container}>
+          
+
           <View style={styles.pointsHeader}>
             <Icon name="star" size={30} color={palette.blanco} />
             <Text style={styles.pointsHeaderText}>Tus puntos acumulados</Text>
             <Text style={styles.pointsHeaderTotal}>
-              {authData?.puntos || 0}
+              {points}
             </Text>
           </View>
 
@@ -161,8 +180,18 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: palette.fondoApp,
   },
+  backgroundImage: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    width: SCREEN_WIDTH,
+    height: SCREEN_HEIGHT,
+    opacity: 0.2,
+    zIndex: 0,
+  },
   scrollView: {
     flex: 1,
+    zIndex: 1,
   },
   container: {
     flex: 1,
@@ -196,7 +225,6 @@ const styles = StyleSheet.create({
     marginTop: 30,
     marginBottom: 10,
   },
-
   gameCardContainer: {
     backgroundColor: palette.blanco,
     borderRadius: 16,
@@ -222,7 +250,6 @@ const styles = StyleSheet.create({
     width: '100%',
     zIndex: 1,
   },
-
   textBackgroundGradient: {
     flex: 1,
   },
@@ -250,7 +277,6 @@ const styles = StyleSheet.create({
     color: palette.textoSecundario,
     marginTop: 2,
   },
-
   rewardCard: {
     flexDirection: 'row',
     backgroundColor: palette.blanco,

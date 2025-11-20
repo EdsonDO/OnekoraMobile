@@ -1,5 +1,3 @@
-// src/screens/LoginScreen_Stub.tsx
-
 import React, { useState } from 'react';
 import {
   View,
@@ -20,10 +18,18 @@ import {
 
 import { palette } from '../theme/palette';
 import { useAuth } from '../context/AuthContext';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-const LoginScreen = () => {
+type AuthStackParamList = {
+  Login: undefined;
+  Register: undefined;
+};
+
+type LoginScreenProps = NativeStackScreenProps<AuthStackParamList, 'Login'>;
+
+const LoginScreen = ({ navigation }: LoginScreenProps) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -42,8 +48,7 @@ const LoginScreen = () => {
     setIsLoading(false);
 
     if (response.success) {
-      // ¡YA NO NECESITAMOS EL ALERT!
-      // El App.tsx se encargará de la navegación automáticamente.
+
     } else {
       Alert.alert('Error de Login', response.error);
     }
@@ -100,7 +105,7 @@ const LoginScreen = () => {
             <Text style={styles.label}>Contraseña:</Text>
             <TextInput
               style={styles.input}
-              placeholder="********"
+              placeholder="Ingrese su contraseña..."
               value={password}
               onChangeText={setPassword}
               secureTextEntry
@@ -114,6 +119,16 @@ const LoginScreen = () => {
                 <Text style={styles.botonIngresarTexto}>Ingresar</Text>
               )}
             </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={styles.registerButton}
+              onPress={() => navigation.navigate('Register')}
+            >
+              <Text style={styles.registerButtonText}>
+                ¿No tienes una cuenta? <Text style={styles.registerLink}>Regístrate aquí</Text>
+              </Text>
+            </TouchableOpacity>
+
           </View>
 
         </ScrollView>
@@ -153,7 +168,7 @@ const styles = StyleSheet.create({
   },
   mainLogo: {
     width: '60%',
-    height: 100,
+    height: 170,
   },
   titleLogoContainer: {
     alignItems: 'center',
@@ -162,7 +177,7 @@ const styles = StyleSheet.create({
   },
   titleLogo: {
     width: '70%',
-    height: 60,
+    height: 90,
   },
   formContainer: {
     marginTop: 40,
@@ -200,6 +215,18 @@ const styles = StyleSheet.create({
   botonIngresarTexto: {
     color: palette.blanco,
     fontSize: 18,
+    fontWeight: 'bold',
+  },
+  registerButton: {
+    marginTop: 25,
+    alignItems: 'center',
+  },
+  registerButtonText: {
+    fontSize: 14,
+    color: palette.textoSecundario,
+  },
+  registerLink: {
+    color: palette.verdePrimario,
     fontWeight: 'bold',
   },
 });

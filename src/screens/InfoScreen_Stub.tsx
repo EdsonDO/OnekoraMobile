@@ -1,5 +1,3 @@
-// src/screens/InfoScreen_Stub.tsx
-
 import React from 'react';
 import {
   View,
@@ -9,78 +7,141 @@ import {
   StatusBar,
   ScrollView,
   TouchableOpacity,
+  Image,
+  Dimensions,
 } from 'react-native';
 import { palette } from '../theme/palette';
 import Icon from 'react-native-vector-icons/Ionicons';
+
+const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const InfoScreen = () => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor={palette.fondoApp} />
+      
+      <Image
+        source={require('../assets/images/bgAplicacionOnekora.png')}
+        style={styles.backgroundImage}
+        resizeMode="cover"
+      />
+
       <ScrollView style={styles.scrollView}>
         <View style={styles.container}>
-          
           <Text style={styles.mainTitle}>Educación Ambiental</Text>
 
           <TouchableOpacity style={styles.articleCard}>
-            <View style={[styles.articleIconContainer, { backgroundColor: '#E8F5E9' }]}>
+            <View
+              style={[
+                styles.articleIconContainer,
+                { backgroundColor: '#E8F5E9' },
+              ]}
+            >
               <Icon name="leaf" size={24} color={palette.verdeOscuro} />
             </View>
             <View style={styles.articleTextContainer}>
               <Text style={styles.articleType}>Guía</Text>
-              <Text style={styles.articleTitle}>Cómo separar residuos orgánicos</Text>
-              <Text style={styles.articleSubtitle}>Aprende a identificar y separar correctamente...</Text>
+              <Text style={styles.articleTitle}>
+                Cómo separar residuos orgánicos
+              </Text>
+              <Text style={styles.articleSubtitle}>
+                Aprende a identificar y separar correctamente...
+              </Text>
             </View>
-            <Icon name="chevron-forward-outline" size={24} color={palette.textoSecundario} />
+            <Icon
+              name="chevron-forward-outline"
+              size={24}
+              color={palette.textoSecundario}
+            />
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.articleCard}>
-            <View style={[styles.articleIconContainer, { backgroundColor: '#E0F2F1' }]}>
+            <View
+              style={[
+                styles.articleIconContainer,
+                { backgroundColor: '#E0F2F1' },
+              ]}
+            >
               <Icon name="recycle" size={24} color={'#00796B'} />
             </View>
             <View style={styles.articleTextContainer}>
               <Text style={styles.articleType}>Educación</Text>
-              <Text style={styles.articleTitle}>Tipos de plásticos reciclables</Text>
-              <Text style={styles.articleSubtitle}>Conoce los diferentes tipos de plástico...</Text>
+              <Text style={styles.articleTitle}>
+                Tipos de plásticos reciclables
+              </Text>
+              <Text style={styles.articleSubtitle}>
+                Conoce los diferentes tipos de plástico...
+              </Text>
             </View>
-            <Icon name="chevron-forward-outline" size={24} color={palette.textoSecundario} />
+            <Icon
+              name="chevron-forward-outline"
+              size={24}
+              color={palette.textoSecundario}
+            />
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.articleCard}>
-            <View style={[styles.articleIconContainer, { backgroundColor: '#E3F2FD' }]}>
+            <View
+              style={[
+                styles.articleIconContainer,
+                { backgroundColor: '#E3F2FD' },
+              ]}
+            >
               <Icon name="globe-outline" size={24} color={'#1E88E5'} />
             </View>
             <View style={styles.articleTextContainer}>
               <Text style={styles.articleType}>Consejos</Text>
-              <Text style={styles.articleTitle}>Reduce tu huella de carbono</Text>
-              <Text style={styles.articleSubtitle}>10 acciones simples para reducir tu impacto...</Text>
+              <Text style={styles.articleTitle}>
+                Reduce tu huella de carbono
+              </Text>
+              <Text style={styles.articleSubtitle}>
+                10 acciones simples para reducir tu impacto...
+              </Text>
             </View>
-            <Icon name="chevron-forward-outline" size={24} color={palette.textoSecundario} />
+            <Icon
+              name="chevron-forward-outline"
+              size={24}
+              color={palette.textoSecundario}
+            />
           </TouchableOpacity>
-
 
           <Text style={styles.sectionTitle}>Categorías</Text>
           <View style={styles.categoryContainer}>
             <TouchableOpacity style={styles.categoryCard}>
-              <Icon name="sync-circle-outline" size={32} color={palette.verdeOscuro} />
+              <Icon
+                name="sync-circle-outline"
+                size={32}
+                color={palette.verdeOscuro}
+              />
               <Text style={styles.categoryText}>Reciclaje</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.categoryCard}>
-              <Icon name="leaf-outline" size={32} color={palette.verdeOscuro} />
+              <Icon
+                name="leaf-outline"
+                size={32}
+                color={palette.verdeOscuro}
+              />
               <Text style={styles.categoryText}>Compostaje</Text>
             </TouchableOpacity>
           </View>
           <View style={styles.categoryContainer}>
             <TouchableOpacity style={styles.categoryCard}>
-              <Icon name="bulb-outline" size={32} color={palette.textoPrimario} />
+              <Icon
+                name="bulb-outline"
+                size={32}
+                color={palette.textoPrimario}
+              />
               <Text style={styles.categoryText}>Tips</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.categoryCard}>
-              <Icon name="newspaper-outline" size={32} color={palette.textoPrimario} />
+              <Icon
+                name="newspaper-outline"
+                size={32}
+                color={palette.textoPrimario}
+              />
               <Text style={styles.categoryText}>Noticias</Text>
             </TouchableOpacity>
           </View>
-
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -92,12 +153,23 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: palette.fondoApp,
   },
+  backgroundImage: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    width: SCREEN_WIDTH,
+    height: SCREEN_HEIGHT,
+    opacity: 0.2,
+    zIndex: 0,
+  },
   scrollView: {
     flex: 1,
+    zIndex: 1,
   },
   container: {
     flex: 1,
     padding: 20,
+    zIndex: 1,
   },
   mainTitle: {
     fontSize: 24,

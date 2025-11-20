@@ -14,6 +14,10 @@ interface AuthData {
   nombre: string | null;
   email: string | null;
   puntos: number | null;
+  recolecciones: number | null;
+  telf: string | null;
+  direccion: string | null;
+  sector: string | null;
   isLoading: boolean;
 }
 
@@ -22,6 +26,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   signOut: () => void;
   addFakePoints: (amount: number) => void;
+  incrementRecolecciones: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -31,6 +36,10 @@ const ROL_KEY = 'userRol';
 const NOMBRE_KEY = 'userName';
 const EMAIL_KEY = 'userEmail';
 const PUNTOS_KEY = 'userPuntos';
+const RECOLECCIONES_KEY = 'userRecolecciones';
+const TELF_KEY = 'userTelf';
+const DIRECCION_KEY = 'userDireccion';
+const SECTOR_KEY = 'userSector';
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [authData, setAuthData] = useState<AuthData>({
@@ -39,6 +48,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     nombre: null,
     email: null,
     puntos: 0,
+    recolecciones: 0,
+    telf: null,
+    direccion: null,
+    sector: null,
     isLoading: true,
   });
 
@@ -50,13 +63,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const storedNombre = await AsyncStorage.getItem(NOMBRE_KEY);
         const storedEmail = await AsyncStorage.getItem(EMAIL_KEY);
         const storedPuntos = await AsyncStorage.getItem(PUNTOS_KEY);
+        const storedRecolecciones = await AsyncStorage.getItem(RECOLECCIONES_KEY);
+        const storedTelf = await AsyncStorage.getItem(TELF_KEY);
+        const storedDireccion = await AsyncStorage.getItem(DIRECCION_KEY);
+        const storedSector = await AsyncStorage.getItem(SECTOR_KEY);
+
         if (storedToken && storedRol) {
           setAuthData({
             token: storedToken,
             rol: storedRol,
             nombre: storedNombre,
             email: storedEmail,
-            puntos: storedPuntos ? parseInt(storedPuntos, 10) : 1250,
+            puntos: storedPuntos ? parseInt(storedPuntos, 10) : 0,
+            recolecciones: storedRecolecciones ? parseInt(storedRecolecciones, 10) : 0,
+            telf: storedTelf,
+            direccion: storedDireccion,
+            sector: storedSector,
             isLoading: false,
           });
         } else {
@@ -66,6 +88,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             nombre: null,
             email: null,
             puntos: 0,
+            recolecciones: 0,
+            telf: null,
+            direccion: null,
+            sector: null,
             isLoading: false,
           });
         }
@@ -76,6 +102,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           nombre: null,
           email: null,
           puntos: 0,
+          recolecciones: 0,
+          telf: null,
+          direccion: null,
+          sector: null,
           isLoading: false,
         });
       }
@@ -89,11 +119,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const response = await apiSignIn(email, password);
 
       if (response.success && response.data) {
+        
         const token = response.data.access;
         const rol = response.data.rol;
         const nombre = response.data.nombreCompleto || 'Usuario';
         const email = response.data.email || '';
-        const puntos = 1250;
+        const puntos = 0;
+        const recolecciones = 0;
+        const telf = response.data.telf || '';
+        const direccion = response.data.direccion || '';
+        const sector = response.data.sector || '';
 
         setAuthData({
           token: token,
@@ -101,6 +136,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           nombre: nombre,
           email: email,
           puntos: puntos,
+          recolecciones: recolecciones,
+          telf: telf,
+          direccion: direccion,
+          sector: sector,
           isLoading: false,
         });
 
@@ -109,12 +148,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         await AsyncStorage.setItem(NOMBRE_KEY, nombre);
         await AsyncStorage.setItem(EMAIL_KEY, email);
         await AsyncStorage.setItem(PUNTOS_KEY, puntos.toString());
+        await AsyncStorage.setItem(RECOLECCIONES_KEY, recolecciones.toString());
+        await AsyncStorage.setItem(TELF_KEY, telf);
+        await AsyncStorage.setItem(DIRECCION_KEY, direccion);
+        await AsyncStorage.setItem(SECTOR_KEY, sector);
 
         return { success: true };
       } else {
         return { success: false, error: response.error };
       }
     } catch (error: any) {
+      console.error('Error en signIn (AuthContext):', error);
       return { success: false, error: error.message || 'Error de red' };
     }
   };
@@ -127,6 +171,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         NOMBRE_KEY,
         EMAIL_KEY,
         PUNTOS_KEY,
+        RECOLECCIONES_KEY,
+        TELF_KEY,
+        DIRECCION_KEY,
+        SECTOR_KEY,
       ]);
     } catch (e) {
       console.error('Error al borrar datos de Auth de AsyncStorage', e);
@@ -138,10 +186,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       nombre: null,
       email: null,
       puntos: 0,
+      recolecciones: 0,
+      telf: null,
+      direccion: null,
+      sector: null,
       isLoading: false,
     });
   };
-
+  
   const addFakePoints = async (amount: number) => {
     if (!authData) return;
     const newPoints = (authData.puntos || 0) + amount;
@@ -154,8 +206,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await AsyncStorage.setItem(PUNTOS_KEY, newPoints.toString());
   };
 
+  const incrementRecolecciones = async () => {
+    if (!authData) return;
+    const newRecolecciones = (authData.recolecciones || 0) + 1;
+
+    setAuthData(prevData => ({
+      ...prevData,
+      recolecciones: newRecolecciones,
+    }));
+
+    await AsyncStorage.setItem(RECOLECCIONES_KEY, newRecolecciones.toString());
+  };
+
   return (
-    <AuthContext.Provider value={{ authData, signIn, signOut, addFakePoints }}>
+    <AuthContext.Provider value={{ authData, signIn, signOut, addFakePoints, incrementRecolecciones }}>
       {children}
     </AuthContext.Provider>
   );

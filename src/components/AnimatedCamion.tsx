@@ -17,6 +17,9 @@ export type Camion = {
   id: string;
   coords: number[];
   eta: number;
+  type: 'GENERAL' | 'ORGANICO' | 'RECICLABLE' | 'PELIGROSO';
+  color: string;
+  label: string;
 };
 
 type Props = {
@@ -70,13 +73,16 @@ export const AnimatedCamion = ({ camion, isSelected, onPress }: Props) => {
       anchor={{ x: 0.5, y: 1 }}
     >
       <TouchableOpacity style={styles.markerContainer} onPress={onPress}>
-        <TruckIcon name="truck" size={20} color={palette.verdeOscuro} />
+        <TruckIcon name="truck" size={24} color={camion.color} />
 
         {isSelected ? (
           <Callout title="" style={styles.calloutContainer}>
             <View style={styles.customCalloutContent}>
-              <Icon name="leaf-sharp" size={14} color={palette.verdeOscuro} />
-              <Text style={styles.calloutText}>ETA: {camion.eta} min</Text>
+              <Icon name="leaf-sharp" size={14} color={camion.color} />
+              <View>
+                 <Text style={[styles.calloutTitle, {color: camion.color}]}>{camion.label}</Text>
+                 <Text style={styles.calloutText}>ETA: {camion.eta} min</Text>
+              </View>
             </View>
           </Callout>
         ) : (
@@ -91,12 +97,14 @@ const styles = StyleSheet.create({
   markerContainer: {
     backgroundColor: palette.blanco,
     borderRadius: 20,
-    padding: 5,
+    padding: 6,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 2,
     elevation: 5,
+    borderWidth: 1,
+    borderColor: '#f0f0f0'
   },
   calloutContainer: {
     backgroundColor: palette.blanco,
@@ -108,8 +116,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 2,
     elevation: 5,
-    width: 140,
-    height: 40,
+    width: 150,
+    height: 50,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -117,9 +125,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  calloutTitle: {
+    marginLeft: 8,
+    fontWeight: 'bold',
+    fontSize: 12,
+  },
   calloutText: {
     marginLeft: 8,
-    color: palette.verdeOscuro,
-    fontWeight: '600',
+    color: '#666',
+    fontSize: 10,
   },
 });

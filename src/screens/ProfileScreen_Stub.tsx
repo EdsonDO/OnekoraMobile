@@ -8,12 +8,27 @@ import {
   TouchableOpacity,
   ScrollView,
   Switch,
+  Linking,
+  Alert,
+  Image,
+  Dimensions,
 } from 'react-native';
 import { palette } from '../theme/palette';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useAuth } from '../context/AuthContext';
+import { CompositeScreenProps } from '@react-navigation/native';
+import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { RootTabParamList, ProfileStackParamList } from '../../App';
 
-const ProfileScreen = () => {
+type ProfileScreenProps = CompositeScreenProps<
+  NativeStackScreenProps<ProfileStackParamList, 'ProfileBase'>,
+  BottomTabScreenProps<RootTabParamList>
+>;
+
+const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
+
+const ProfileScreen = ({ navigation }: ProfileScreenProps) => {
   const { authData, signOut } = useAuth();
   const [isTravelMode, setIsTravelMode] = useState(false);
 
@@ -30,9 +45,35 @@ const ProfileScreen = () => {
     return initials.toUpperCase();
   };
 
+  const formatPhoneNumber = (telf: string | null | undefined) => {
+    if (!telf || telf === '') return 'No registrado';
+    if (telf.startsWith('+51')) return telf;
+    if (telf.length === 9) return `+51 ${telf.slice(0, 3)} ${telf.slice(3, 6)} ${telf.slice(6, 9)}`;
+    return telf;
+  };
+
+  const handleSupportPress = () => {
+    const supportNumber = '51988174934';
+    const message = 'Hola, necesito ayuda con la app Onekora.';
+    const url = `whatsapp://send?phone=${supportNumber}&text=${encodeURIComponent(
+      message,
+    )}`;
+    
+    Linking.openURL(url).catch(() => {
+      Alert.alert('Error', 'No se pudo abrir WhatsApp. ¿Está instalado?');
+    });
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor={palette.fondoApp} />
+      
+      <Image
+        source={require('../assets/images/bgAplicacionOnekora.png')}
+        style={styles.backgroundImage}
+        resizeMode="cover"
+      />
+      
       <ScrollView style={styles.scrollView}>
         <View style={styles.container}>
           <View style={styles.profileHeader}>
@@ -44,7 +85,9 @@ const ProfileScreen = () => {
             <Text style={styles.profileName}>
               {authData?.nombre || 'Cargando...'}
             </Text>
-            <Text style={styles.profileContact}>+51 988 174 934</Text>
+            <Text style={styles.profileContact}>
+              {formatPhoneNumber(authData?.telf)}
+            </Text>
             <Text style={styles.profileContact}>
               {authData?.email || 'cargando@email.com'}
             </Text>
@@ -62,8 +105,12 @@ const ProfileScreen = () => {
                 color={palette.verdePrimario}
               />
               <View style={styles.addressTextContainer}>
-                <Text style={styles.addressText}>Jr. Ficiticius #245</Text>
-                <Text style={styles.addressSector}>Sector: Centro</Text>
+                <Text style={styles.addressText}>
+                  {authData?.direccion || 'No registrada'}
+                </Text>
+                <Text style={styles.addressSector}>
+                  Sector: {authData?.sector || 'No registrado'}
+                </Text>
               </View>
             </View>
             <View style={styles.buttonContainer}>
@@ -104,13 +151,16 @@ const ProfileScreen = () => {
               <Text style={styles.statLabel}>Puntos totales</Text>
             </View>
             <View style={styles.statCard}>
-              <Text style={styles.statNumber}>48</Text>
+              <Text style={styles.statNumber}>{authData?.recolecciones || 0}</Text>
               <Text style={styles.statLabel}>Recolecciones</Text>
             </View>
           </View>
 
           <View style={styles.linksContainer}>
-            <TouchableOpacity style={styles.linkButton}>
+            <TouchableOpacity 
+              style={styles.linkButton}
+              onPress={() => navigation.navigate('Settings')}
+            >
               <Icon
                 name="settings-outline"
                 size={22}
@@ -125,7 +175,10 @@ const ProfileScreen = () => {
               />
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.linkButton}>
+            <TouchableOpacity 
+              style={styles.linkButton}
+              onPress={handleSupportPress}
+            >
               <Icon
                 name="help-circle-outline"
                 size={22}
@@ -166,12 +219,23 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: palette.fondoApp,
   },
+  backgroundImage: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    width: SCREEN_WIDTH,
+    height: SCREEN_HEIGHT,
+    opacity: 0.2,
+    zIndex: 0,
+  },
   scrollView: {
     flex: 1,
+    zIndex: 1,
   },
   container: {
     flex: 1,
     padding: 20,
+    zIndex: 1,
   },
   profileHeader: {
     alignItems: 'center',
@@ -197,7 +261,7 @@ const styles = StyleSheet.create({
     color: palette.textoPrimario,
   },
   profileContact: {
-    fontSize: 14,
+    fontSize: 12,
     color: palette.textoSecundario,
     marginTop: 2,
   },

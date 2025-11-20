@@ -2,20 +2,37 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { StyleSheet, Dimensions } from 'react-native';
+
+export type MapStackParamList = {
+  MapBase: { 
+    simulateRequest?: boolean; 
+    assignedTruckType?: string;
+    assignedTruckColor?: string;
+    assignedTruckLabel?: string;
+  } | undefined;
+};
 
 export type RootTabParamList = {
   Inicio: undefined;
   Info: undefined;
-  Mapa: undefined;
+  Mapa: { screen: 'MapBase'; params: MapStackParamList['MapBase'] }; 
   Juegos: undefined;
   Perfil: undefined;
 };
 
 export type HomeStackParamList = {
   HomeBase: undefined;
-  FullMap: undefined;
+  FullMap: undefined; 
   ArticleDetail: undefined;
   SolicitarRecojo: undefined;
+  CallingUnitScreen: {
+    operatorName: string;
+    truckType: string;
+    truckColor: string;
+    truckLabel: string;
+  };
+  ProxRecolecciones: undefined;
 };
 
 export type GamesStackParamList = {
@@ -24,6 +41,16 @@ export type GamesStackParamList = {
   TriviaReciclaje: undefined;
   ClasificaResiduos: undefined;
   MemoryVerde: undefined;
+};
+
+export type ProfileStackParamList = {
+  ProfileBase: undefined;
+  Settings: undefined;
+};
+
+export type AuthStackParamList = {
+  Login: undefined;
+  Register: undefined;
 };
 
 import { AuthProvider, useAuth } from './src/context/AuthContext';
@@ -45,9 +72,12 @@ import DriverHomeScreen from './src/screens/DriverHomeScreen_Stub';
 import ClasifResiduosScreen from './src/screens/ClasifResiduosScreen_Stub';
 import MemoryVerdeScreen from './src/screens/MemoryVerdeScreen_Stub';
 import TriviaRecicScreen from './src/screens/TriviaRecicScreen_Stub';
+import ConfigScreen from './src/screens/ConfigScreen_Stub';
+import CallingUnitScreen from './src/screens/CallingUnitScreen_Stub';
+import ProxRecoleccionesScreen from './src/screens/ProxRecoleccionesScreen_Stub'; // IMPORTACIÓN
 
 const RootStack = createNativeStackNavigator();
-const AuthStack = createNativeStackNavigator();
+const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const AppTabs = createBottomTabNavigator<RootTabParamList>();
 
 const globalHeaderOptions = {
@@ -65,6 +95,16 @@ const HomeStack = () => (
       name="SolicitarRecojo"
       component={SolicitudRecojoScreen}
       options={{ title: 'Solicitar Recojo Especial' }}
+    />
+    <HomeStackNav.Screen 
+      name="CallingUnitScreen" 
+      component={CallingUnitScreen} 
+      options={{ headerShown: false }} 
+    />
+    <HomeStackNav.Screen 
+      name="ProxRecolecciones" 
+      component={ProxRecoleccionesScreen} 
+      options={{ title: 'Programación' }} 
     />
   </HomeStackNav.Navigator>
 );
@@ -100,31 +140,36 @@ const InfoStack = () => (
   </InfoStackNav.Navigator>
 );
 
-const ProfileStackNav = createNativeStackNavigator();
+const ProfileStackNav = createNativeStackNavigator<ProfileStackParamList>();
 const ProfileStack = () => (
   <ProfileStackNav.Navigator screenOptions={globalHeaderOptions}>
     <ProfileStackNav.Screen name="ProfileBase" component={ProfileScreen} />
+    <ProfileStackNav.Screen name="Settings" component={ConfigScreen} options={{ title: 'Configuración' }}/>
   </ProfileStackNav.Navigator>
 );
 
-const MapStackNav = createNativeStackNavigator();
+const MapStackNav = createNativeStackNavigator<MapStackParamList>();
 const MapStack = () => (
   <MapStackNav.Navigator screenOptions={globalHeaderOptions}>
     <MapStackNav.Screen name="MapBase" component={FullMapScreen} />
   </MapStackNav.Navigator>
 );
 
+const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
+
 const TabNavigator = () => (
   <AppTabs.Navigator
-    screenOptions={{ headerShown: false }}
-    tabBar={props => <CustomTabBar {...props} />}
-  >
-    <AppTabs.Screen name="Inicio" component={HomeStack} />
-    <AppTabs.Screen name="Info" component={InfoStack} />
-    <AppTabs.Screen name="Mapa" component={MapStack} />
-    <AppTabs.Screen name="Juegos" component={GamesStack} />
-    <AppTabs.Screen name="Perfil" component={ProfileStack} />
-  </AppTabs.Navigator>
+      screenOptions={{ 
+        headerShown: false,
+      }}
+      tabBar={props => <CustomTabBar {...props} />}
+    >
+      <AppTabs.Screen name="Inicio" component={HomeStack} />
+      <AppTabs.Screen name="Info" component={InfoStack} />
+      <AppTabs.Screen name="Mapa" component={MapStack} />
+      <AppTabs.Screen name="Juegos" component={GamesStack} />
+      <AppTabs.Screen name="Perfil" component={ProfileStack} />
+    </AppTabs.Navigator>
 );
 
 const AuthNavigator = () => (
@@ -163,5 +208,8 @@ const App = () => {
     </NavigationContainer>
   );
 };
+
+const styles = StyleSheet.create({
+});
 
 export default App;
