@@ -7,6 +7,13 @@ import React, {
 } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { login as apiSignIn } from '../services/AuthService';
+import axios from 'axios';
+
+// URL BASE para actualizar puntos (Asegúrate de que coincida con tu AuthService)
+// SI USAS PYTHONANYWHERE: Cambia esto por 'https://edsondoes.pythonanywhere.com/api'
+//const API_URL = 'http://10.0.2.2:8000/api'; 
+
+const API_URL = 'https://edsondoes.pythonanywhere.com/api';
 
 interface AuthData {
   token: string | null;
@@ -124,8 +131,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const rol = response.data.rol;
         const nombre = response.data.nombreCompleto || 'Usuario';
         const email = response.data.email || '';
-        const puntos = 0;
-        const recolecciones = 0;
+        const puntos = response.data.puntos || 0;
+        const recolecciones = response.data.recolecciones || 0;
         const telf = response.data.telf || '';
         const direccion = response.data.direccion || '';
         const sector = response.data.sector || '';
@@ -193,7 +200,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       isLoading: false,
     });
   };
-  
+  const syncStatsWithBackend = async (puntosExtra: number, recoleccionesExtra: number) => {
+      if (!authData.token) return;
+      
+      try {
+          await axios.post(`${API_URL}/update-stats/`, {
+              puntos_extra: puntosExtra,
+              recolecciones_extra: recoleccionesExtra
+          }, {
+              headers: { Authorization: `Bearer ${authData.token}` }
+          });
+          console.log("Estadísticas sincronizadas con backend");
+      } catch (error) {
+          console.error("Error sincronizando estadísticas:", error);
+      }
+  };
+
   const addFakePoints = async (amount: number) => {
     if (!authData) return;
     const newPoints = (authData.puntos || 0) + amount;
@@ -202,8 +224,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       ...prevData,
       puntos: newPoints,
     }));
-
     await AsyncStorage.setItem(PUNTOS_KEY, newPoints.toString());
+
+    syncStatsWithBackend(amount, 0);
   };
 
   const incrementRecolecciones = async () => {
@@ -214,8 +237,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       ...prevData,
       recolecciones: newRecolecciones,
     }));
-
     await AsyncStorage.setItem(RECOLECCIONES_KEY, newRecolecciones.toString());
+    syncStatsWithBackend(0, 1);
   };
 
   return (
@@ -232,3 +255,51 @@ export const useAuth = () => {
   }
   return context;
 };
+
+
+
+
+
+/**
+ * ============================================================================
+ * AVISO DE PROPIEDAD INTELECTUAL
+ * ============================================================================
+ * * PROYECTO:        Onekora (Anteriormente "Huánuco Recicla")
+ * DESARROLLADOR:   Dionicio Orihuela Edson Raul
+ * AÑO:             2025
+ * UBICACIÓN:       Huánuco, Perú
+ *
+ * ----------------------------------------------------------------------------
+ * AUTORÍA
+ * ----------------------------------------------------------------------------
+ * Este código fuente, incluyendo la lógica de negocio, arquitectura de software
+ * (Frontend y Backend), diseño de interfaces (UI), experiencia de usuario (UX),
+ * activos gráficos y el rebranding de la identidad visual de la marca "Onekora",
+ * ha sido desarrollado en su totalidad por Dionicio Orihuela Edson Raul.
+ *
+ * El autor certifica su autoría exclusiva sobre la obra completa, abarcando:
+ * 1. Desarrollo FullStack (React Native / Django).
+ * 2. Diseño Gráfico y Creativo.
+ * 3. Ingeniería de Software y Base de Datos.
+ *
+ * ----------------------------------------------------------------------------
+ * MARCO LEGAL
+ * ----------------------------------------------------------------------------
+ * Esta obra está protegida por las leyes de propiedad intelectual de la
+ * República del Perú, específicamente bajo el DECRETO LEGISLATIVO Nº 822
+ * (Ley sobre el Derecho de Autor) y sus modificatorias.
+ *
+ * Conforme al Artículo 22 de dicha ley, el autor reivindica su DERECHO MORAL
+ * de paternidad sobre la obra, el cual es perpetuo, inalienable e imprescriptible.
+ *
+ * Queda terminantemente prohibida la reproducción total o parcial, distribución,
+ * comunicación pública, transformación o ingeniería inversa de este software
+ * sin la autorización previa y por escrito del titular de los derechos.
+ *
+ * Cualquier uso no autorizado de este código o de los elementos visuales
+ * asociados constituirá una violación a los derechos de propiedad intelectual
+ * y será sujeto a las acciones civiles y penales correspondientes ante el
+ * INDECOPI y el Poder Judicial del Perú.
+ *
+ * ============================================================================
+ */

@@ -7,13 +7,16 @@ import {
   TouchableOpacity, 
   Animated, 
   Easing,
-  Vibration
+  Vibration,
+  Platform
 } from 'react-native';
 import Mapbox, {
   MapView,
   Camera,
-  UserLocation,
   MarkerView,
+  ShapeSource,
+  CircleLayer,
+  locationManager,
 } from '@rnmapbox/maps';
 import { useRoute, RouteProp } from '@react-navigation/native'; 
 import { palette } from '../theme/palette';
@@ -21,6 +24,7 @@ import { AnimatedCamion, Camion } from '../components/AnimatedCamion';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useAuth } from '../context/AuthContext'; 
+import { requestLocationPermission } from '../services/PermissionService';
 
 const { width, height } = Dimensions.get('window');
 
@@ -34,17 +38,16 @@ const COLOR_PELIGROSO = '#D32F2F';
 const TRIGGER_DISTANCE = 200;
 const TARGET_TRUCK_ID = 'c2'; 
 
-
 const SECTORS = [
   { lat: -9.9306, lng: -76.2422 }, 
   { lat: -9.9450, lng: -76.2380 }, 
-  { lat: -9.9550, lng: -76.2450 }, // POLVOHUAYNAAAAAAAAAAAAAAAAAAAAAA
+  { lat: -9.9550, lng: -76.2450 }, 
   { lat: -9.9250, lng: -76.2500 }, 
   { lat: -9.9380, lng: -76.2300 }, 
   { lat: -9.9150, lng: -76.2480 }, 
   { lat: -9.9200, lng: -76.2320 }, 
-  { lat: -9.9080, lng: -76.2220 },
-  { lat: -9.9280, lng: -76.2400 },
+  { lat: -9.9080, lng: -76.2220 }, 
+  { lat: -9.9280, lng: -76.2400 }, 
 ];
 
 const TRUCK_TYPES = [
@@ -54,13 +57,10 @@ const TRUCK_TYPES = [
   { type: 'PELIGROSO', color: COLOR_PELIGROSO, label: 'Peligrosos' },
 ];
 
-
 const randomJitter = (center: number) => center + (Math.random() - 0.5) * 0.018; 
-
 
 const GET_INITIAL_TRUCKS = (): Camion[] => {
   const trucks: Camion[] = [];
-
 
   trucks.push({ 
     id: TARGET_TRUCK_ID, 
@@ -71,8 +71,8 @@ const GET_INITIAL_TRUCKS = (): Camion[] => {
     label: 'Orgánicos' 
   });
 
-  for (let i = 0; i < 29; i++) {
-    const sector = SECTORS[Math.floor(Math.random() * SECTORS.length)];
+  for (let i = 0; i < 35; i++) {
+    const sector = SECTORS[Math.floor(Math.random() * SECTORS.length)]; 
     const truckType = TRUCK_TYPES[Math.floor(Math.random() * TRUCK_TYPES.length)];
     
     trucks.push({
@@ -112,7 +112,10 @@ export const FullMapScreen = () => {
   const [isSimulationActive, setIsSimulationActive] = useState(false);
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [hideTray, setHideTray] = useState(false);
+  const [userLocation, setUserLocation] = useState<number[] | null>(null);
+  const hasCentered = useRef(false);
   
+  const cameraRef = useRef<Camera>(null);
   const slideAnim = useRef(new Animated.Value(300)).current; 
 
   const safeVibrate = () => {
@@ -120,6 +123,44 @@ export const FullMapScreen = () => {
       Vibration.vibrate(100);
     } catch (error) {}
   };
+  useEffect(() => {
+    const startLocation = async () => {
+      const granted = await requestLocationPermission();
+      if (!granted) return;
+
+      locationManager.start();
+      
+      const onUpdate = (location: any) => {
+        if (location && location.coords) {
+          setUserLocation([location.coords.longitude, location.coords.latitude]);
+        }
+      };
+
+      locationManager.addListener(onUpdate);
+
+      return () => {
+        locationManager.removeListener(onUpdate);
+        locationManager.stop();
+      };
+    };
+
+    startLocation();
+  }, []);
+
+  useEffect(() => {
+    if (userLocation && !hasCentered.current && !isSimulationActive) {
+        hasCentered.current = true; 
+        
+
+        cameraRef.current?.setCamera({
+           centerCoordinate: userLocation,
+           zoomLevel: 15, 
+           animationDuration: 2000, 
+           animationMode: 'flyTo' 
+        });
+    }
+  }, [userLocation, isSimulationActive]);
+
 
   useEffect(() => {
     if (route.params?.simulateRequest) {
@@ -205,10 +246,10 @@ export const FullMapScreen = () => {
          setHideTray(false);
          safeVibrate();
          Animated.timing(slideAnim, {
-            toValue: 0, 
-            duration: 500,
-            easing: Easing.out(Easing.exp),
-            useNativeDriver: true,
+           toValue: 0, 
+           duration: 500,
+           easing: Easing.out(Easing.exp),
+           useNativeDriver: true,
          }).start();
       }
     } else if (!inRange && !isConfirmed && !hideTray) {
@@ -254,6 +295,21 @@ export const FullMapScreen = () => {
     }, 2000);
   };
 
+  const userLocationGeoJSON = {
+    type: 'FeatureCollection',
+    features: userLocation ? [
+      {
+        type: 'Feature',
+        id: 'userLocation',
+        geometry: {
+          type: 'Point',
+          coordinates: userLocation,
+        },
+        properties: {},
+      },
+    ] : [],
+  };
+
   return (
     <View style={styles.container}>
       <MapView
@@ -262,12 +318,12 @@ export const FullMapScreen = () => {
         onLongPress={handleLongPress}
       >
         <Camera
+          ref={cameraRef}
           defaultSettings={{
-            centerCoordinate: [-76.2350, -9.9250],
-            zoomLevel: 12.5
+            centerCoordinate: [-76.2422, -9.9306],
+            zoomLevel: 13.5 
           }}
-          followUserLocation={true}
-          followZoomLevel={14}
+          followUserLocation={false} 
         />
 
         {homeCoords && (
@@ -290,7 +346,27 @@ export const FullMapScreen = () => {
           />
         ))}
 
-        <UserLocation visible={true} />
+        {userLocation && (
+            <ShapeSource id="userLocationSource" shape={userLocationGeoJSON as any}>
+                <CircleLayer
+                    id="userLocationWhite"
+                    style={{
+                        circleRadius: 9,
+                        circleColor: 'white',
+                        circlePitchAlignment: 'map',
+                    }}
+                />
+                <CircleLayer
+                    id="userLocationBlue"
+                    style={{
+                        circleRadius: 6,
+                        circleColor: palette.azulPrincipal || '#007AFF',
+                        circlePitchAlignment: 'map',
+                    }}
+                />
+            </ShapeSource>
+        )}
+
       </MapView>
 
       {isSimulationActive && !homeCoords && (
@@ -524,3 +600,90 @@ const styles = StyleSheet.create({
 });
 
 export default FullMapScreen;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**
+ * ============================================================================
+ * AVISO DE PROPIEDAD INTELECTUAL
+ * ============================================================================
+ * * PROYECTO:        Onekora (Anteriormente "Huánuco Recicla")
+ * DESARROLLADOR:   Dionicio Orihuela Edson Raul
+ * AÑO:             2025
+ * UBICACIÓN:       Huánuco, Perú
+ *
+ * ----------------------------------------------------------------------------
+ * AUTORÍA
+ * ----------------------------------------------------------------------------
+ * Este código fuente, incluyendo la lógica de negocio, arquitectura de software
+ * (Frontend y Backend), diseño de interfaces (UI), experiencia de usuario (UX),
+ * activos gráficos y el rebranding de la identidad visual de la marca "Onekora",
+ * ha sido desarrollado en su totalidad por Dionicio Orihuela Edson Raul.
+ *
+ * El autor certifica su autoría exclusiva sobre la obra completa, abarcando:
+ * 1. Desarrollo FullStack (React Native / Django).
+ * 2. Diseño Gráfico y Creativo.
+ * 3. Ingeniería de Software y Base de Datos.
+ *
+ * ----------------------------------------------------------------------------
+ * MARCO LEGAL
+ * ----------------------------------------------------------------------------
+ * Esta obra está protegida por las leyes de propiedad intelectual de la
+ * República del Perú, específicamente bajo el DECRETO LEGISLATIVO Nº 822
+ * (Ley sobre el Derecho de Autor) y sus modificatorias.
+ *
+ * Conforme al Artículo 22 de dicha ley, el autor reivindica su DERECHO MORAL
+ * de paternidad sobre la obra, el cual es perpetuo, inalienable e imprescriptible.
+ *
+ * Queda terminantemente prohibida la reproducción total o parcial, distribución,
+ * comunicación pública, transformación o ingeniería inversa de este software
+ * sin la autorización previa y por escrito del titular de los derechos.
+ *
+ * Cualquier uso no autorizado de este código o de los elementos visuales
+ * asociados constituirá una violación a los derechos de propiedad intelectual
+ * y será sujeto a las acciones civiles y penales correspondientes ante el
+ * INDECOPI y el Poder Judicial del Perú.
+ *
+ * ============================================================================
+ */
